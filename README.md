@@ -18,8 +18,9 @@ The current version implements a simplified flight model with 3 degrees of freed
 ### Functionality
 - Configurable rocket parameters (geometry, mass, engine)
 - Selectable launch angle
-- Numerical integration of equations of motion (odeint method)
-- Automatic landing detection
+- Launch rail: the rocket follows the launch direction until it leaves the rail
+- Numerical integration of equations of motion (SciPy `solve_ivp`, RK45)
+- Automatic landing detection (ground-contact event)
 - Output of primary flight characteristics
 
 ### Visualization
@@ -31,7 +32,7 @@ The current version implements a simplified flight model with 3 degrees of freed
 ## Requirements
 
 ### Software
-- Python 3.8 or higher
+- Python 3.10 or higher
 - NumPy >= 1.20.0
 - SciPy >= 1.7.0
 - Matplotlib >= 3.3.0
@@ -39,16 +40,33 @@ The current version implements a simplified flight model with 3 degrees of freed
 ### Installing Dependencies
 
 ```bash
-pip install numpy scipy matplotlib
+pip install -r requirements.txt
 ```
 
 ## Usage
 
+### Running the Program
+
+```bash
+python Main.py
+```
+
+The program asks for a rocket preset and a launch angle, prints the flight
+characteristics, then shows graphs and an animation.
+
 ### Basic Launch
 
 ```python
-# Create rocket with default parameters
+import numpy as np
+import matplotlib.pyplot as plt
+
+from Rocket import Rocket, PRESETS
+from RocketSimulator import RocketSimulator
+from Main import print_summary, plot_results
+
+# Create rocket with default parameters (Student Rocket preset)
 rocket = Rocket()
+# ...or choose a preset: rocket = Rocket(PRESETS[2])
 
 # Initialize simulator
 sim = RocketSimulator(rocket)
@@ -83,12 +101,13 @@ results = sim.simulate(launch_angle=85, duration=60)
 ## Project Structure
 
 ```
-rocket-simulator/
-├── rocket_sim.py          # Main simulator module
-├── README.md              # Documentation
-├── requirements.txt       # Project dependencies
-└── examples/              # Usage examples
-    └── basic_flight.py    # Basic example
+RocketFlightSimulation/
+├── Main.py              # Entry point: menu, results output, graphs, animation
+├── Rocket.py            # Rocket parameters and presets
+├── RocketSimulator.py   # Equations of motion and numerical integration
+├── Atmosphere.py        # Atmosphere model (density, gravity)
+├── requirements.txt     # Project dependencies
+└── README.md            # Documentation
 ```
 
 ## Theoretical Foundations
@@ -293,15 +312,15 @@ plt.show()
 ### Launch Angle Optimization
 
 ```python
-angles = range(70, 91, 5)
-max_altitudes = []
+angles = range(40, 91, 5)
+ranges = []
 
 for angle in angles:
     results = sim.simulate(launch_angle=angle)
-    max_altitudes.append(np.max(results['altitude']))
+    ranges.append(results['x'][-1])
 
-optimal_angle = angles[np.argmax(max_altitudes)]
-print(f"Optimal angle: {optimal_angle}°")
+optimal_angle = angles[np.argmax(ranges)]
+print(f"Angle for maximum range: {optimal_angle}°")
 ```
 
 ## Validation

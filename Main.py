@@ -14,7 +14,6 @@ def plot_results(results):
 
     # Plot 1: Flight trajectory
     axes[0, 0].plot(results['x'], results['y'], 'b-', linewidth=2)
-    axes[0, 0].fill_between(results['x'], 0, results['y'], alpha=0.3)
     axes[0, 0].set_xlabel('Horizontal distance (m)', fontsize=12)
     axes[0, 0].set_ylabel('Altitude (m)', fontsize=12)
     axes[0, 0].set_title('Flight Trajectory', fontsize=14)
@@ -67,12 +66,13 @@ def print_summary(results):
     apogee_time = results['time'][np.argmax(results['altitude'])]
     print(f"Time to apogee:             {apogee_time:.2f} s")
 
-    print(f"Total flight time:          {results['time'][-1]:.2f} s")
-    print(f"Range:                      {results['x'][-1]:.2f} m")
-
-    # Landing velocity
-    landing_velocity = results['velocity'][-1]
-    print(f"Landing velocity:           {landing_velocity:.2f} m/s")
+    if results['landed']:
+        print(f"Total flight time:          {results['time'][-1]:.2f} s")
+        print(f"Range:                      {results['x'][-1]:.2f} m")
+        print(f"Landing velocity:           {results['velocity'][-1]:.2f} m/s")
+    else:
+        print(f"Rocket still in the air at  {results['time'][-1]:.2f} s "
+              f"(altitude {results['y'][-1]:.2f} m)")
     print("=" * 60 + "\n")
 
 
@@ -118,8 +118,24 @@ def select_preset():
             print("Invalid input. Please enter a number.")
 
 
+def select_launch_angle(default=90.0):
+    """Asks for the launch angle in degrees (Enter = default)"""
+    while True:
+        raw = input(f"Launch angle in degrees (0–90, Enter = {default:g}): ").strip()
+        if not raw:
+            return default
+        try:
+            angle = float(raw)
+            if 0 < angle <= 90:
+                return angle
+            print("Angle must be greater than 0 and at most 90.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+
 if __name__ == "__main__":
     preset = select_preset()
+    launch_angle = select_launch_angle()
 
     # Create rocket
     print("\nStep 1: Creating rocket...")
@@ -132,18 +148,18 @@ if __name__ == "__main__":
 
     # Run simulation
     print("Step 3: Running simulation...")
-    results = simulator.simulate(launch_angle=90, duration=my_rocket.sim_duration)
+    results = simulator.simulate(launch_angle=launch_angle, duration=my_rocket.sim_duration)
 
     # Analyze results
     print("\nStep 4: Analyzing results...")
     print_summary(results)
 
     # Plot graphs
-    print("Step 5: Plotting graphs...\n")
+    print("Step 5: Plotting graphs (close the window to continue)...\n")
     plot_results(results)
 
     # Animate flight
-    print("Step 6: Animating flight...\n")
+    print("Step 6: Animating flight (close the window to exit)...\n")
     animate_flight(results)
 
-    print("Done! Close the graph window to exit the program.")
+    print("Done!")
